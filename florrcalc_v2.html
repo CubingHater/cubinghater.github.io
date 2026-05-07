@@ -1,0 +1,450 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --unusual:3 #7EEF6D; --unusual:3 #FFE65D; --rare: #4D52E3; --epic: #861FDE; --legendary: #DE1F1F;
+    --mythic: #1FDBDD; --ultra: #FF2B75; --super: #2BFFA3; --eternal: #EEEEEE;
+    --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a24; --border: rgba(255,255,255,0.08);
+    --text: #f0f0f5; --muted: rgba(240,240,245,0.5);
+    --sel: #861FDE;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+  .hero { padding: 2.5rem 2rem 1.5rem; text-align: center; position: relative; overflow: hidden; }
+  .hero::before { content:''; position:absolute; inset:0; background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(134,31,222,0.18) 0%, transparent 70%); pointer-events:none; }
+  .logo { font-size: 11px; font-family: 'Space Mono', monospace; letter-spacing: 0.2em; color: var(--muted); margin-bottom: 0.75rem; text-transform: uppercase; }
+  h1 { font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 800; line-height: 1.1; }
+  h1 span { color: var(--sel); transition: color 0.3s; }
+  .hero-sub { font-size: 13px; color: var(--muted); margin-top: 0.6rem; font-family: 'Space Mono', monospace; }
+
+  .rarity-bar { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; padding: 1rem 1rem 0.5rem; }
+  .rarity-pill {
+    padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    font-family: 'Space Mono', monospace; letter-spacing: 0.05em; cursor: pointer;
+    border: 1px solid transparent; transition: all 0.15s; text-transform: uppercase;
+  }
+  .rarity-pill:hover { transform: translateY(-2px); }
+  .rarity-pill.active { border-color: currentColor; filter: brightness(1.2); }
+
+  .main { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 1rem 1.5rem; max-width: 920px; margin: 0 auto; }
+  @media (max-width: 600px) { .main { grid-template-columns: 1fr; } }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; position: relative; overflow: hidden; transition: border-color 0.3s; }
+  .card-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; transition: background 0.3s; }
+  .card h2 { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.25rem; font-family: 'Space Mono', monospace; }
+
+  .select-wrap { position: relative; margin-bottom: 1rem; }
+  .select-wrap select {
+    width: 100%; padding: 10px 14px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 10px; color: var(--text);
+    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 500;
+    appearance: none; cursor: pointer; transition: border-color 0.3s;
+  }
+  .select-wrap::after { content:'▾'; position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; font-size:12px; }
+
+  .input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 1rem; }
+  .input-row input[type=number] {
+    flex: 1; padding: 10px 14px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 10px; color: var(--text);
+    font-family: 'Space Mono', monospace; font-size: 14px; transition: border-color 0.3s;
+  }
+  .input-row label { font-size: 12px; color: var(--muted); white-space: nowrap; font-family: 'Space Mono', monospace; }
+
+  .calc-btn {
+    width: 100%; padding: 11px; border-radius: 10px; border: none; cursor: pointer;
+    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+    background: var(--sel); color: #111; transition: all 0.2s; letter-spacing: 0.03em;
+  }
+  .calc-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+  .calc-btn:active { transform: translateY(0); }
+
+  .result-box { margin-top: 1rem; padding: 1rem; background: var(--surface2); border-radius: 10px; border: 1px solid var(--border); display: none; }
+  .result-box.show { display: block; }
+  .result-label { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+  .result-val { font-size: 2rem; font-weight: 800; font-family: 'Space Mono', monospace; transition: color 0.3s; }
+  .result-sub { font-size: 11px; color: var(--muted); margin-top: 4px; font-family: 'Space Mono', monospace; }
+
+  .prob-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .prob-item {
+    padding: 10px 12px; background: var(--surface2); border-radius: 10px;
+    border: 1px solid var(--border); cursor: pointer; transition: all 0.15s;
+  }
+  .prob-item:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-1px); }
+  .prob-item.active-prob { border-color: currentColor; }
+  .prob-name { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; font-family: 'Space Mono', monospace; }
+  .prob-val { font-size: 16px; font-weight: 800; margin-top: 2px; }
+  .prob-pct { font-size: 10px; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+  .charts-section { max-width: 920px; margin: 0 auto; padding: 0 1.5rem 1rem; }
+  .chart-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .chart-tab {
+    padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    font-family: 'Space Mono', monospace; letter-spacing: 0.05em; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface2); color: var(--muted);
+    transition: all 0.15s; text-transform: uppercase;
+  }
+  .chart-tab.active { color: #111; border-color: transparent; }
+  .chart-tab:hover { color: var(--text); }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; position: relative; overflow: hidden; }
+  .chart-card canvas { width: 100% !important; }
+  .chart-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; transition: background 0.3s; }
+  .chart-desc { font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace; margin-bottom: 1rem; }
+
+  .game-card { grid-column: 1 / -1; }
+  .game-state { text-align: center; padding: 1.25rem 0; }
+  .game-question { font-size: 1rem; font-weight: 700; line-height: 1.6; margin-bottom: 1.25rem; }
+  .game-question span { font-family: 'Space Mono', monospace; }
+  .guess-input {
+    width: 100%; max-width: 220px; padding: 12px 16px; font-size: 1.1rem;
+    background: var(--surface2); border: 2px solid var(--border);
+    border-radius: 10px; color: var(--text); font-family: 'Space Mono', monospace;
+    text-align: center; margin-bottom: 1rem; display: block; margin-left: auto; margin-right: auto;
+  }
+  .guess-input:focus { outline: none; }
+  .guess-btn {
+    padding: 10px 28px; border-radius: 10px; border: none; cursor: pointer;
+    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+    transition: all 0.15s; color: #111;
+  }
+  .guess-btn:hover { filter: brightness(1.15); }
+  .game-result { margin-top: 1rem; padding: 1rem; border-radius: 10px; background: var(--surface2); border: 1px solid var(--border); }
+  .game-result-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+  .game-result-detail { font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace; line-height: 1.8; }
+  .new-game-btn { margin-top: 1rem; padding: 9px 22px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; background: transparent; color: var(--text); transition: all 0.15s; }
+  .new-game-btn:hover { background: var(--surface2); }
+  .timer-bar { width: 100%; height: 4px; background: var(--surface2); border-radius: 2px; margin-top: 1rem; overflow: hidden; }
+  .timer-fill { height: 100%; border-radius: 2px; transition: width 0.1s linear; }
+
+  footer { border-top: 1px solid var(--border); max-width: 920px; margin: 1rem auto 0; padding: 1.5rem 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+  .footer-brand { font-size: 15px; font-weight: 800; }
+  .footer-brand span { transition: color 0.3s; }
+  .footer-links { display: flex; gap: 1.5rem; }
+  .footer-links a { font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace; text-decoration: none; transition: color 0.15s; }
+  .footer-links a:hover { color: var(--text); }
+  .footer-copy { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; width: 100%; }
+</style>
+
+<h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">florrCalc — petal crafting calculator with charts</h2>
+
+<div class="hero">
+  <p class="logo">florrCalc · 26.0 beta</p>
+  <h1>A calculator.<br><span id="heroSpan">And way more.</span></h1>
+  <p class="hero-sub">// petal crafting odds calculator</p>
+</div>
+
+<div class="rarity-bar" id="rarityBar"></div>
+
+<div class="main">
+  <div class="card" id="craftCard">
+    <div class="card-accent" id="craftAccent"></div>
+    <h2>Craft calculator</h2>
+    <div class="select-wrap">
+      <select id="raritySelect" onchange="onRarityChange()">
+        <option value="common">Common</option>
+        <option value="unusual">Unusual</option>
+        <option value="rare">Rare</option>
+        <option value="epic">Epic</option>
+        <option value="legendary">Legendary</option>
+        <option value="mythic">Mythic</option>
+        <option value="ultra">Ultra</option>
+        <option value="super">Super</option>
+      </select>
+    </div>
+    <div class="input-row">
+      <label>Petals</label>
+      <input type="number" id="petalCount" value="10" min="0" oninput="calculate()" />
+    </div>
+    <button class="calc-btn" id="calcBtn" onclick="calculate()">Calculate</button>
+    <div class="result-box" id="resultBox">
+      <p class="result-label">Expected result</p>
+      <p class="result-val" id="resultVal">—</p>
+      <p class="result-sub" id="resultSub"></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-accent" id="probAccent"></div>
+    <h2>Craft odds</h2>
+    <div class="prob-grid" id="probGrid"></div>
+  </div>
+
+  <div class="card game-card">
+    <div class="card-accent" id="gameAccent" style="background:linear-gradient(90deg,#FF2B75,#2BFFA3)"></div>
+    <h2>Guess game</h2>
+    <div class="game-state" id="gameState">
+      <p style="color:var(--muted);font-size:13px;margin-bottom:1rem;font-family:'Space Mono',monospace">Test your crafting intuition. How many petals will upgrade?</p>
+      <button class="guess-btn" style="background:var(--sel)" onclick="startGame()">Start game</button>
+    </div>
+  </div>
+</div>
+
+<div class="charts-section">
+  <div class="chart-tabs" id="chartTabs"></div>
+  <div class="chart-card">
+    <div class="chart-accent" id="chartAccent"></div>
+    <p class="chart-desc" id="chartDesc"></p>
+    <canvas id="mainChart" height="260"></canvas>
+  </div>
+</div>
+
+<footer>
+  <div>
+    <div class="footer-brand">florr<span id="footerSpan" style="color:var(--sel)">Calc</span></div>
+    <p class="footer-copy" style="margin-top:4px">version 26.0 beta · petal crafting calculator</p>
+  </div>
+  <div class="footer-links">
+    <a href="#">Commands</a>
+    <a href="#">Rarities</a>
+    <a href="#">About</a>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const RARITIES = ["common","unusual","rare","epic","legendary","mythic","ultra","super"];
+const NEXT_MAP = { common:"unusual", unusual:"rare", rare:"epic", epic:"legendary", legendary:"mythic", mythic:"ultra", ultra:"super", super:"eternal" };
+const COLORS = { common:"#7EEF6D", unusual:"#FFE65D", rare:"#4D52E3", epic:"#861FDE", legendary:"#DE1F1F", mythic:"#1FDBDD", ultra:"#FF2B75", super:"#2BFFA3", eternal:"#EEEEEE" };
+const PROBS = { common:0.64, unusual:0.32, rare:0.16, epic:0.08, legendary:0.04, mythic:0.02, ultra:0.01, super:0.005 };
+
+let selectedRarity = "common";
+let chart = null;
+let activeChart = 0;
+
+function expected(petals, chance) {
+  if (petals < 5) return 0;
+  return (petals - 2.5*(1-chance)) / ((2.5/chance) + 2.5);
+}
+
+function isDark(r) { return r === "common" || r === "legendary" || r === "ultra" || r === "eternal"; }
+
+function buildRarityBar() {
+  const bar = document.getElementById('rarityBar');
+  bar.innerHTML = RARITIES.map(r =>
+    `<span class="rarity-pill" style="color:${COLORS[r]};background:${COLORS[r]}22" onclick="selectRarity('${r}')" id="pill_${r}">${r}</span>`
+  ).join('') + `<span class="rarity-pill" style="color:#EEEEEE;background:#EEEEEE22;cursor:default">eternal</span>`;
+}
+
+function buildProbGrid() {
+  const grid = document.getElementById('probGrid');
+  grid.innerHTML = RARITIES.map(r => {
+    const next = NEXT_MAP[r];
+    return `<div class="prob-item" style="border-color:transparent" onclick="selectRarity('${r}')" id="prob_${r}">
+      <p class="prob-name" style="color:${COLORS[r]}">${r}</p>
+      <p class="prob-val" style="color:${COLORS[r]}">${(PROBS[r]*100).toFixed(2)}%</p>
+      <p class="prob-pct">→ ${next.charAt(0).toUpperCase()+next.slice(1)}</p>
+    </div>`;
+  }).join('');
+}
+
+function selectRarity(r) {
+  selectedRarity = r;
+  document.getElementById('raritySelect').value = r;
+  const c = COLORS[r];
+  document.querySelectorAll('.rarity-pill').forEach(p => p.classList.remove('active'));
+  const pill = document.getElementById('pill_'+r);
+  if (pill) pill.classList.add('active');
+  document.querySelectorAll('.prob-item').forEach(p => p.style.borderColor = 'transparent');
+  const pr = document.getElementById('prob_'+r);
+  if (pr) pr.style.borderColor = c;
+
+  document.getElementById('craftAccent').style.background = c;
+  document.getElementById('probAccent').style.background = c;
+  document.getElementById('chartAccent').style.background = c;
+  document.getElementById('calcBtn').style.background = c;
+  document.getElementById('calcBtn').style.color = isDark(r) ? '#111' : '#fff';
+  document.getElementById('craftCard').style.borderColor = c+'44';
+  document.getElementById('heroSpan').style.color = c;
+  document.getElementById('footerSpan').style.color = c;
+  document.documentElement.style.setProperty('--sel', c);
+
+  document.querySelectorAll('.chart-tab').forEach((t,i) => {
+    if (t.classList.contains('active')) { t.style.background = c; t.style.color = isDark(r)?'#111':'#fff'; }
+  });
+
+  calculate();
+  updateChart();
+}
+
+function onRarityChange() { selectRarity(document.getElementById('raritySelect').value); }
+
+function calculate() {
+  const petals = parseInt(document.getElementById('petalCount').value) || 0;
+  const r = selectedRarity;
+  const res = expected(petals, PROBS[r]);
+  const next = NEXT_MAP[r];
+  const box = document.getElementById('resultBox');
+  box.classList.add('show');
+  document.getElementById('resultVal').textContent = res.toFixed(2);
+  document.getElementById('resultVal').style.color = COLORS[r];
+  document.getElementById('resultSub').textContent = `${r.toUpperCase()} → ${next.toUpperCase()} · ${petals} petals`;
+}
+
+const CHART_DEFS = [
+  {
+    label: "Results vs petals",
+    desc: "Expected amount of petals crafted as petals increase for the selected rarity",
+    build: (r) => {
+      const pts = Array.from({length:50}, (_,i)=>(i+1)*20);
+      return {
+        type:'line',
+        data:{ labels:pts, datasets:[{ label:`${r} crafted petals`, data:pts.map(p=>+expected(p,PROBS[r]).toFixed(2)), borderColor:COLORS[r], backgroundColor:COLORS[r]+'22', tension:0.4, fill:true, pointRadius:0 }] },
+        options:{ plugins:{legend:{display:false}}, scales:{ x:{title:{display:true,text:'Petals',color:'rgba(240,240,245,0.4)',font:{family:'Space Mono',size:10}}, ticks:{color:'rgba(240,240,245,0.4)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.04)'}}, y:{title:{display:true,text:'Expected crafted petals',color:'rgba(240,240,245,0.4)',font:{family:'Space Mono',size:10}}, ticks:{color:'rgba(240,240,245,0.4)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.06)'}} } }
+      };
+    }
+  },
+  {
+    label: "All rarities @ 100 petals",
+    desc: "Expected crafted petals per rarity with 100 petals",
+    build: (r) => {
+      return {
+        type:'bar',
+        data:{ labels:RARITIES.map(x=>x.charAt(0).toUpperCase()+x.slice(1)), datasets:[{ label:'Expected crafted petals', data:RARITIES.map(x=>+expected(100,PROBS[x]).toFixed(2)), backgroundColor:RARITIES.map(x=>COLORS[x]+'cc'), borderColor:RARITIES.map(x=>COLORS[x]), borderWidth:1 }] },
+        options:{ plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'rgba(240,240,245,0.5)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.04)'}}, y:{ticks:{color:'rgba(240,240,245,0.5)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.06)'}} } }
+      };
+    }
+  },
+  {
+    label: "Efficiency curve",
+    desc: "Chance to craft a petal of the next rarity per petal used — efficiency drops as petals increase due to wasted partial crafts",
+    build: (r) => {
+      const pts = Array.from({length:98}, (_,i)=>i+5);
+      return {
+        type:'line',
+        data:{ labels:pts, datasets:[{ label:'Efficiency', data:pts.map(p=>+(expected(p,PROBS[r])/p).toFixed(4)), borderColor:COLORS[r], backgroundColor:COLORS[r]+'18', tension:0.3, fill:true, pointRadius:0 }] },
+        options:{ plugins:{legend:{display:false}}, scales:{ x:{title:{display:true,text:'Petals',color:'rgba(240,240,245,0.4)',font:{family:'Space Mono',size:10}}, ticks:{color:'rgba(240,240,245,0.4)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.04)'}}, y:{title:{display:true,text:'Chance to craft per petal',color:'rgba(240,240,245,0.4)',font:{family:'Space Mono',size:10}}, ticks:{color:'rgba(240,240,245,0.5)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.06)'}} } }
+      };
+    }
+  },
+  {
+    label: "Rarity comparison",
+    desc: "Side-by-side expected result curves for all rarities from 5 to 200 petals",
+    build: (r) => {
+      const pts = Array.from({length:40}, (_,i)=>(i+1)*5);
+      return {
+        type:'line',
+        data:{ labels:pts, datasets:RARITIES.map(x=>({ label:x, data:pts.map(p=>+expected(p,PROBS[x]).toFixed(2)), borderColor:COLORS[x], backgroundColor:'transparent', tension:0.4, pointRadius:0, borderWidth: x===r?2.5:1, borderDash: x===r?[]:[4,4] })) },
+        options:{ plugins:{legend:{labels:{color:'rgba(240,240,245,0.6)',font:{family:'Space Mono',size:9},boxWidth:12,padding:10}}}, scales:{ x:{title:{display:true,text:'Petals',color:'rgba(240,240,245,0.4)',font:{family:'Space Mono',size:10}}, ticks:{color:'rgba(240,240,245,0.4)',font:{size:9}}, grid:{color:'rgba(255,255,255,0.04)'}}, y:{ticks:{color:'rgba(240,240,245,0.5)',font:{size:9}}, grid:{color:'rgba(255,255,255,0.06)'}} } }
+      };
+    }
+  },
+  {
+    label: "Petals to 1 upgrade",
+    desc: "How many petals you need on average to guarantee 1 successful upgrade per rarity",
+    build: (r) => {
+      const results = [];
+      for (const x of RARITIES) {
+        for (let p=5; p<=2000; p++) {
+          if (expected(p,PROBS[x]) >= 1) { results.push({r:x,p}); break; }
+        }
+      }
+      return {
+        type:'bar',
+        data:{ labels:results.map(d=>d.r.charAt(0).toUpperCase()+d.r.slice(1)), datasets:[{ label:'Petals needed', data:results.map(d=>d.p), backgroundColor:results.map(d=>COLORS[d.r]+'cc'), borderColor:results.map(d=>COLORS[d.r]), borderWidth:1 }] },
+        options:{ plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'rgba(240,240,245,0.5)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.04)'}}, y:{title:{display:true,text:'Petals required',color:'rgba(240,240,245,0.4)',font:{family:'Space Mono',size:10}}, ticks:{color:'rgba(240,240,245,0.5)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.06)'}} } }
+      };
+    }
+  }
+];
+
+function buildChartTabs() {
+  const tabs = document.getElementById('chartTabs');
+  tabs.innerHTML = CHART_DEFS.map((d,i) =>
+    `<button class="chart-tab${i===0?' active':''}" id="ctab_${i}" onclick="switchChart(${i})">${d.label}</button>`
+  ).join('');
+}
+
+function switchChart(i) {
+  activeChart = i;
+  document.querySelectorAll('.chart-tab').forEach((t,j) => {
+    t.classList.toggle('active', j===i);
+    if (j===i) { t.style.background=COLORS[selectedRarity]; t.style.color=isDark(selectedRarity)?'#111':'#fff'; }
+    else { t.style.background=''; t.style.color=''; }
+  });
+  updateChart();
+}
+
+function updateChart() {
+  const def = CHART_DEFS[activeChart];
+  document.getElementById('chartDesc').textContent = def.desc;
+  const cfg = def.build(selectedRarity);
+  cfg.options = cfg.options || {};
+  cfg.options.responsive = true;
+  cfg.options.maintainAspectRatio = true;
+  cfg.options.animation = { duration: 400 };
+  if (!cfg.options.plugins) cfg.options.plugins = {};
+  cfg.options.plugins.tooltip = { bodyFont:{family:'Space Mono'}, titleFont:{family:'Space Mono'} };
+
+  const canvas = document.getElementById('mainChart');
+  if (chart) { chart.destroy(); }
+  chart = new Chart(canvas, cfg);
+}
+
+let gameTimerInterval = null, gameSeconds = 30, gameActive = false, gameAnswer = 0, gameRarity = "";
+
+function startGame() {
+  const r = RARITIES[Math.floor(Math.random()*RARITIES.length)];
+  const petals = Math.floor(Math.random()*996)+5;
+  gameAnswer = expected(petals, PROBS[r]);
+  gameRarity = r;
+  gameActive = true;
+  gameSeconds = 30;
+  const next = NEXT_MAP[r];
+  const c = COLORS[r];
+  document.getElementById('gameState').innerHTML = `
+    <p class="game-question">How many <span style="color:${c}">${r}</span> petals will craft to <span style="color:${COLORS[next]||'#fff'}">${next}</span>?<br><span style="font-size:1.3rem">${petals} petals</span></p>
+    <input type="number" class="guess-input" id="guessInput" placeholder="Your guess..." style="border-color:${c}44" />
+    <br>
+    <button class="guess-btn" onclick="submitGuess()" style="background:${c};color:${isDark(r)?'#111':'#fff'}">Submit guess</button>
+    <div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%;background:${c}"></div></div>
+    <p style="font-size:11px;color:var(--muted);margin-top:6px;font-family:'Space Mono',monospace" id="timerText">30s remaining</p>
+  `;
+  document.getElementById('guessInput').addEventListener('keydown', e => { if(e.key==='Enter') submitGuess(); });
+  if (gameTimerInterval) clearInterval(gameTimerInterval);
+  gameTimerInterval = setInterval(() => {
+    gameSeconds--;
+    const fill = document.getElementById('timerFill');
+    const txt = document.getElementById('timerText');
+    if (fill) fill.style.width = ((gameSeconds/30)*100)+'%';
+    if (txt) txt.textContent = gameSeconds+'s remaining';
+    if (gameSeconds <= 0) { clearInterval(gameTimerInterval); revealAnswer(null); }
+  }, 1000);
+}
+
+function submitGuess() {
+  if (!gameActive) return;
+  clearInterval(gameTimerInterval);
+  const val = parseFloat(document.getElementById('guessInput').value);
+  if (isNaN(val)) return;
+  revealAnswer(val);
+}
+
+function revealAnswer(guess) {
+  gameActive = false;
+  const diff = guess !== null ? Math.abs(guess - gameAnswer) : null;
+  const pct = guess !== null ? (diff / gameAnswer) * 100 : null;
+  let verdict = "Time's up!", color = '#888';
+  if (guess !== null) {
+    if (pct <= 10) { verdict = "Incredible! Within 10%"; color = COLORS.ultra; }
+    else if (pct <= 25) { verdict = "Not bad! Within 25%"; color = COLORS.legendary; }
+    else { verdict = "Too far off!"; color = COLORS.epic; }
+  }
+  document.getElementById('gameState').innerHTML = `
+    <div class="game-result">
+      <p class="game-result-title" style="color:${color}">${verdict}</p>
+      <p class="game-result-detail">
+        Your guess: ${guess !== null ? guess.toFixed(2) : '—'}<br>
+        Correct answer: ${gameAnswer.toFixed(2)}<br>
+        ${pct !== null ? 'Error: '+pct.toFixed(1)+'%' : ''}
+      </p>
+    </div>
+    <button class="new-game-btn" onclick="startGame()">Play again</button>
+  `;
+}
+
+buildRarityBar();
+buildProbGrid();
+buildChartTabs();
+selectRarity('common');
+switchChart(0);
+</script>
